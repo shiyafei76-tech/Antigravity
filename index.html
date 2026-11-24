@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>简易计算器/간이 계산기</title>
+  <style>
+    /* 全局重置与基础样式 */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Malgun Gothic", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+      color: #1e293b;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px 10px;
+    }
+
+    /* 顶部标题区 */
+    .title-box {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .title-box h1 {
+      font-size: 1.6rem;
+      color: #0f172a;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .title-box p {
+      font-size: 0.9rem;
+      color: #64748b;
+    }
+
+    /* 计算器主体卡片 */
+    .calculator {
+      width: 100%;
+      max-width: 380px;
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(0, 0, 0, 0.05);
+      border: 1px solid #f1f5f9;
+    }
+
+    /* 显示屏区域 */
+    .display-screen {
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: right;
+      margin-bottom: 20px;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.03);
+    }
+
+    .history-text {
+      min-height: 20px;
+      font-size: 0.9rem;
+      color: #94a3b8;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .current-text {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: #0f172a;
+      overflow-x: auto;
+      white-space: nowrap;
+      margin-top: 4px;
+      line-height: 1.2;
+    }
+
+    /* 按钮网格布局 */
+    .btn-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    /* 通用按钮样式 */
+    button {
+      border: none;
+      outline: none;
+      background: #f1f5f9;
+      color: #1e293b;
+      font-size: 1.15rem;
+      font-weight: 600;
+      padding: 14px 6px;
+      border-radius: 12px;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      line-height: 1.2;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+    }
+
+    button:hover {
+      background: #e2e8f0;
+      transform: translateY(-2px);
+    }
+
+    button:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    /* 数字按钮样式 */
+    .btn-num {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      font-size: 1.35rem;
+    }
+
+    .btn-num:hover {
+      background: #f8fafc;
+    }
+
+    /* 运算符按钮样式 (加、减、乘、除) */
+    .btn-op {
+      background: #e0f2fe;
+      color: #0284c7;
+      border: 1px solid #bae6fd;
+      font-size: 0.95rem;
+    }
+
+    .btn-op:hover {
+      background: #bae6fd;
+    }
+
+    /* 清除与退格功能键 */
+    .btn-clear {
+      background: #fee2e2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+      font-size: 0.9rem;
+    }
+
+    .btn-clear:hover {
+      background: #fecaca;
+    }
+
+    .btn-backspace {
+      background: #fef3c7;
+      color: #d97706;
+      border: 1px solid #fde68a;
+      font-size: 0.9rem;
+    }
+
+    .btn-backspace:hover {
+      background: #fde68a;
+    }
+
+    /* 等号计算按钮 */
+    .btn-equal {
+      grid-row: span 2;
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      color: #ffffff;
+      font-size: 1.05rem;
+      box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3);
+    }
+
+    .btn-equal:hover {
+      background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+    }
+
+    /* 底部提示 */
+    .footer-tip {
+      text-align: center;
+      margin-top: 18px;
+      font-size: 0.8rem;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 标题与副标题（中韩双语） -->
+  <div class="title-box">
+    <h1>简易计算器/간이 계산기</h1>
+    <p>基础加减乘除与小数点运算/기본 사칙연산 및 소수점 계산</p>
+  </div>
+
+  <!-- 计算器面板 -->
+  <div class="calculator">
+    <!-- 显示屏 -->
+    <div class="display-screen">
+      <div id="historyDisplay" class="history-text"></div>
+      <div id="currentDisplay" class="current-text">0</div>
+    </div>
+
+    <!-- 按钮网格 -->
+    <div class="btn-grid">
+      <!-- 第一行 -->
+      <button type="button" class="btn-clear" onclick="clearAll()">清除/초기화</button>
+      <button type="button" class="btn-backspace" onclick="deleteLast()">退格/지우기</button>
+      <button type="button" class="btn-op" onclick="chooseOperator('÷')">除/÷</button>
+      <button type="button" class="btn-op" onclick="chooseOperator('×')">乘/×</button>
+
+      <!-- 第二行 -->
+      <button type="button" class="btn-num" onclick="appendNumber('7')">7</button>
+      <button type="button" class="btn-num" onclick="appendNumber('8')">8</button>
+      <button type="button" class="btn-num" onclick="appendNumber('9')">9</button>
+      <button type="button" class="btn-op" onclick="chooseOperator('-')">减号/-</button>
+
+      <!-- 第三行 -->
+      <button type="button" class="btn-num" onclick="appendNumber('4')">4</button>
+      <button type="button" class="btn-num" onclick="appendNumber('5')">5</button>
+      <button type="button" class="btn-num" onclick="appendNumber('6')">6</button>
+      <button type="button" class="btn-op" onclick="chooseOperator('+')">加号/+</button>
+
+      <!-- 第四与第五行 -->
+      <button type="button" class="btn-num" onclick="appendNumber('1')">1</button>
+      <button type="button" class="btn-num" onclick="appendNumber('2')">2</button>
+      <button type="button" class="btn-num" onclick="appendNumber('3')">3</button>
+      <button type="button" class="btn-equal" onclick="computeResult()">等于/계산</button>
+
+      <button type="button" class="btn-num" onclick="appendNumber('0')">0</button>
+      <button type="button" class="btn-num" onclick="appendNumber('00')">00</button>
+      <button type="button" class="btn-op" onclick="appendDecimal()">点/.</button>
+    </div>
+
+    <!-- 底部简易提示（中韩双语） -->
+    <div class="footer-tip">
+      提示：支持键盘按键直接输入 / 안내: 키보드 입력 지원
+    </div>
+  </div>
+
+  <!-- JavaScript 交互与运算逻辑 -->
+  <script>
+    // 状态变量
+    let currentInput = '0';      // 当前输入的数字或结果
+    let previousInput = '';     // 之前输入的数值
+    let currentOperator = null; // 当前选定的运算符 (+, -, ×, ÷)
+    let resetOnNextInput = false; // 是否在下次输入时重置当前显示
+
+    // DOM 显示元素
+    const currentDisplay = document.getElementById('currentDisplay');
+    const historyDisplay = document.getElementById('historyDisplay');
+
+    // 更新显示屏内容
+    function updateDisplay() {
+      currentDisplay.textContent = currentInput;
+      if (currentOperator !== null && previousInput !== '') {
+        historyDisplay.textContent = `${previousInput} ${currentOperator}`;
+      } else {
+        historyDisplay.textContent = '';
+      }
+    }
+
+    // 1. 输入数字 (0-9, 00)
+    function appendNumber(num) {
+      if (resetOnNextInput) {
+        currentInput = num === '00' ? '0' : num;
+        resetOnNextInput = false;
+      } else {
+        if (currentInput === '0') {
+          if (num === '00') return;
+          currentInput = num;
+        } else {
+          // 限制最大输入长度
+          if (currentInput.length >= 15) return;
+          currentInput += num;
+        }
+      }
+      updateDisplay();
+    }
+
+    // 2. 输入小数点 (.)
+    function appendDecimal() {
+      if (resetOnNextInput) {
+        currentInput = '0.';
+        resetOnNextInput = false;
+        updateDisplay();
+        return;
+      }
+      // 避免重复输入小数点
+      if (!currentInput.includes('.')) {
+        currentInput += '.';
+        updateDisplay();
+      }
+    }
+
+    // 3. 选择运算符 (+, -, ×, ÷)
+    function chooseOperator(op) {
+      if (currentOperator !== null && !resetOnNextInput) {
+        computeResult();
+      }
+      previousInput = currentInput;
+      currentOperator = op;
+      resetOnNextInput = true;
+      updateDisplay();
+    }
+
+    // 4. 计算结果 (=)
+    function computeResult() {
+      if (currentOperator === null || previousInput === '') return;
+
+      const prev = parseFloat(previousInput);
+      const curr = parseFloat(currentInput);
+      let result = 0;
+
+      // 运算逻辑
+      switch (currentOperator) {
+        case '+':
+          result = prev + curr;
+          break;
+        case '-':
+          result = prev - curr;
+          break;
+        case '×':
+          result = prev * curr;
+          break;
+        case '÷':
+          if (curr === 0) {
+            // 除数为零错误提示（中韩双语）
+            currentInput = '除数不能为0/0 나누기 불가';
+            currentOperator = null;
+            previousInput = '';
+            resetOnNextInput = true;
+            updateDisplay();
+            return;
+          }
+          result = prev / curr;
+          break;
+        default:
+          return;
+      }
+
+      // 格式化精度，避免浮点数精度偏差 (例如 0.1 + 0.2 = 0.30000000000000004)
+      result = parseFloat(result.toPrecision(12));
+
+      historyDisplay.textContent = `${previousInput} ${currentOperator} ${currentInput} =`;
+      currentInput = String(result);
+      currentOperator = null;
+      previousInput = '';
+      resetOnNextInput = true;
+      currentDisplay.textContent = currentInput;
+    }
+
+    // 5. 清除全部 (AC / 초기화)
+    function clearAll() {
+      currentInput = '0';
+      previousInput = '';
+      currentOperator = null;
+      resetOnNextInput = false;
+      historyDisplay.textContent = '';
+      updateDisplay();
+    }
+
+    // 6. 退格删除一位 (Backspace / 지우기)
+    function deleteLast() {
+      if (resetOnNextInput) return;
+      if (currentInput.length === 1 || currentInput === '除数不能为0/0 나누기 불가') {
+        currentInput = '0';
+      } else {
+        currentInput = currentInput.slice(0, -1);
+      }
+      updateDisplay();
+    }
+
+    // 7. 键盘按键支持
+    window.addEventListener('keydown', (e) => {
+      if (e.key >= '0' && e.key <= '9') {
+        appendNumber(e.key);
+      } else if (e.key === '.') {
+        appendDecimal();
+      } else if (e.key === '+') {
+        chooseOperator('+');
+      } else if (e.key === '-') {
+        chooseOperator('-');
+      } else if (e.key === '*') {
+        chooseOperator('×');
+      } else if (e.key === '/') {
+        e.preventDefault();
+        chooseOperator('÷');
+      } else if (e.key === 'Enter' || e.key === '=') {
+        e.preventDefault();
+        computeResult();
+      } else if (e.key === 'Backspace') {
+        deleteLast();
+      } else if (e.key === 'Escape') {
+        clearAll();
+      }
+    });
+
+    // 页面初次加载显示
+    updateDisplay();
+  </script>
+</body>
+</html>
